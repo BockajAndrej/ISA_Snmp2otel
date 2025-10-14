@@ -1,9 +1,23 @@
-#include "src/Snmp2otel_BL.h"
+#include "src/ArgumentParser.h"
+#include "src/Structs/SnmpOtelErrors.h"
+#include "src/SnmpOtel_BL.h"
 
 int main(int argc, char *argv[]) {
-    snmp2otel_bl::Snmp2otel_BL BL_logic;
+    ArgumentParser parser;
+    SnmpOtelConfig config;
 
-    BL_logic.mainFnc();
+    try{
+        config = parser.Parse(argc, argv);
+        SnmpOtel_BL BL_logic;
 
-    return 0;
+        BL_logic.MainFnc(config);
+    }catch (const MissingArgumentError& e){
+        std::cerr << "ERROR: " << e.what() << "\n";
+        return EXIT_FAILURE;
+    }catch(const InvalidValueError& e){
+        std::cerr << "ERROR: " << e.what() << "\n";
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
