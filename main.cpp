@@ -1,3 +1,4 @@
+
 #include "src/ArgumentParser.h"
 #include "src/Structs/SnmpOtelErrors.h"
 #include "src/SnmpOtel_BL.h"
@@ -15,6 +16,9 @@ int main(int argc, char *argv[]) {
         std::cerr << "ERROR: " << e.what() << "\n";
         return EXIT_FAILURE;
     }catch(const InvalidValueError& e){
+        std::cerr << "ERROR: " << e.what() << "\n";
+        return EXIT_FAILURE;
+    }catch(const std::runtime_error& e){
         std::cerr << "ERROR: " << e.what() << "\n";
         return EXIT_FAILURE;
     }

@@ -13,8 +13,8 @@ struct SnmpOtelConfig {
     std::string endpoint;    // -e
 
     std::string community = "public"; // -C
-    int interval = 60;       // -i
-    int retries = 3;         // -r
+    int interval = 10;       // -i
+    int retries = 2;         // -r
     int timeout = 1000;      // -T
     int port = 161;          // -p
     bool verbose = false;    // -v

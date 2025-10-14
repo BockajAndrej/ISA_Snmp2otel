@@ -14,4 +14,6 @@ add_executable(snmp2otel main.cpp
         src/SnmpOtelBer.h
         src/SnmpOtel_BL.cpp
         src/SnmpOtel_BL.h
+        src/Handlers/SignalHandler.cpp
+        src/Handlers/SignalHandler.h
 )
