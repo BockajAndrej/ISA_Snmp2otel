@@ -3,7 +3,12 @@ project(snmp2otel)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(snmpServer tests/snmpAgent.cpp)
+add_executable(snmpServer
+        tests/snmpAgent.cpp
+
+        libs/BasicSnmp/lib/asn1encoder.cpp
+        libs/BasicSnmp/lib/snmpencoder.cpp
+)
 
 add_executable(snmp2otel
         main.cpp
@@ -22,6 +27,11 @@ add_executable(snmp2otel
 
         libs/BasicSnmp/lib/asn1encoder.cpp
         libs/BasicSnmp/lib/snmpencoder.cpp
+        src/SnmpOtelJson.cpp
+        src/SnmpOtelJson.h
+        src/Structs/SnmpOtelExportConfig.h
+        src/SnmpOtelClient.cpp
+        src/SnmpOtelClient.h
 )
 
 target_include_directories(snmp2otel PRIVATE

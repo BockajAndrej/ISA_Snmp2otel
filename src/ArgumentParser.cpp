@@ -10,7 +10,7 @@
 #include "Structs/SnmpOtelErrors.h"
 
 SnmpOtelConfig ArgumentParser::Parse(int argc, char **argv) {
-    auto config_ = SnmpOtelConfig{}; // Reset to default
+    auto config = SnmpOtelConfig{}; // Reset to default
 
     // Convert argv to std::vector (for iteration)
     std::vector<std::string> args(argv + 1, argv + argc);
@@ -20,37 +20,37 @@ SnmpOtelConfig ArgumentParser::Parse(int argc, char **argv) {
 
         // Process flags with value
         if (arg == "-t") {
-            config_.target = GetNextValue(args, i, "-t");
+            config.target = GetNextValue(args, i, "-t");
         } else if (arg == "-o") {
-            config_.oids_file = GetNextValue(args, i, "-o");
+            config.oids_file = GetNextValue(args, i, "-o");
         } else if (arg == "-e") {
-            config_.endpoint = GetNextValue(args, i, "-e");
+            config.endpoint = GetNextValue(args, i, "-e");
         } else if (arg == "-C") {
-            config_.community = GetNextValue(args, i, "-C");
+            config.community = GetNextValue(args, i, "-C");
         } else if (arg == "-i") {
-            config_.interval = ParseIntValue(args, i, "-i");
+            config.interval = ParseIntValue(args, i, "-i");
         } else if (arg == "-r") {
-            config_.retries = ParseIntValue(args, i, "-r");
+            config.retries = ParseIntValue(args, i, "-r");
         } else if (arg == "-T") {
-            config_.timeout = ParseIntValue(args, i, "-T");
+            config.timeout = ParseIntValue(args, i, "-T");
         } else if (arg == "-p") {
-            config_.port = ParseIntValue(args, i, "-p");
+            config.port = ParseIntValue(args, i, "-p");
         }
         // Process boolean flags
         else if (arg == "-v") {
-            config_.verbose = true;
+            config.verbose = true;
         } else if (arg == "-h" || arg == "--help") {
-            config_.help_requested = true;
-            return config_;
+            config.help_requested = true;
+            return config;
         }
     }
 
     // Kontrola povinných argumentov
-    CheckRequired("-t", config_.target);
-    CheckRequired("-o", config_.oids_file);
-    CheckRequired("-e", config_.endpoint);
+    CheckRequired("-t", config.target);
+    CheckRequired("-o", config.oids_file);
+    CheckRequired("-e", config.endpoint);
 
-    return config_;
+    return config;
 }
 
 void ArgumentParser::PrintHelp(const std::string &app_name) const {

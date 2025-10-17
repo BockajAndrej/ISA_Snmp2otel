@@ -8,34 +8,22 @@
 #include <string>
 #include <vector>
 
+#include "../libs/BasicSnmp/lib/snmplib.h"
+
+#include "Structs/SnmpOtelExportConfig.h"
+
 class SnmpOtelBer {
 public:
-    SnmpOtelBer(int SnmpVersion);
-    std::vector<unsigned char> CreateSnmpMessage(const std::string& CommunityString, int PduType, std::vector<std::string> *OidArray);
-    std::vector<unsigned char> procesuj_paket(const std::string& CommunityString, int PduType, std::vector<std::string> *OidsRaw);
+    explicit SnmpOtelBer(int SnmpVersion);
+    SNMP::StdByteVector CreateSnmpMsg(const std::string& CommunityString, int PduType, std::vector<std::string> *OidsRaw);
+    int DecodeData(SnmpOtelExportConfig& config, SNMP::StdByteVector bytes);
+
 
 private:
     int RequestID;
     int Error;
     int ErrorIndex;
     char SnmpVersion;
-
-    enum TLV_T{
-        BOOLEAN = 0b00000001,
-        INTEGER = 0b00000010,
-        OCTETSTRING = 0b00000100,
-        NULL_TYPE = 0b00000101,
-        OBJECTIDENTIFIER = 0b00000110,
-        SEQUENCE = 0b00110000
-    };
-
-    std::vector<uint32_t> DivideOid(const std::string& oid_string);
-    void EncodeSegment(uint32_t value, std::vector<uint8_t>& result_bytes);
-    std::vector<uint8_t> OidToVector(const std::string& oid_string);
-
-    void CreateSnmpPdu(std::vector<unsigned char> *msg, char PduType, std::vector<std::string> *OidArray);
-    void CreateVarbindList(std::vector<unsigned char> *msg, std::vector<std::string> *OidArray);
-    void CreateVarbind(std::vector<unsigned char>* msg, std::string OidStr);
 };
 
 

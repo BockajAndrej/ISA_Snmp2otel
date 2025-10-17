@@ -9,9 +9,7 @@
 
 class SnmpOtelExport {
 public:
-    std::string create_json(std::string msg);
     int SendHttpMessage(const std::string& target_ip, const std::string& message);
-
 
 private:
 
