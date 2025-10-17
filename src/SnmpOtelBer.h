@@ -11,7 +11,8 @@
 class SnmpOtelBer {
 public:
     SnmpOtelBer(int SnmpVersion);
-    std::vector<unsigned char> CreateSnmpMessage(std::string CommunityString, int PduType, std::vector<std::string> *OidArray);
+    std::vector<unsigned char> CreateSnmpMessage(const std::string& CommunityString, int PduType, std::vector<std::string> *OidArray);
+    std::vector<unsigned char> procesuj_paket(const std::string& CommunityString, int PduType, std::vector<std::string> *OidsRaw);
 
 private:
     int RequestID;

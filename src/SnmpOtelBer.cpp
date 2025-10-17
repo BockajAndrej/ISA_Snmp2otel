@@ -3,7 +3,12 @@
 //
 #include <sstream>
 
+#include <string>
+#include <iostream>
+#include "../libs/BasicSnmp/lib/snmplib.h"
+
 #include "SnmpOtelBer.h"
+
 SnmpOtelBer::SnmpOtelBer(int SnmpVersion) {
     this->SnmpVersion = SnmpVersion;
 
@@ -11,7 +16,7 @@ SnmpOtelBer::SnmpOtelBer(int SnmpVersion) {
     Error = 0;
     ErrorIndex = 0;
 }
-std::vector<unsigned char> SnmpOtelBer::CreateSnmpMessage(std::string CommunityString, int PduType, std::vector<std::string> *OidArray) {
+std::vector<unsigned char> SnmpOtelBer::CreateSnmpMessage(const std::string& CommunityString, int PduType, std::vector<std::string> *OidArray) {
     std::vector<unsigned char> msg;
     msg.push_back(TLV_T::SEQUENCE);
     msg.push_back(0);
@@ -167,4 +172,17 @@ std::vector<uint32_t> SnmpOtelBer::DivideOid(const std::string &oid_string) {
         throw std::invalid_argument("OID need to have at least 2 segments.");
     }
     return segmenty;
+}
+
+std::vector<unsigned char> SnmpOtelBer::procesuj_paket(const std::string& CommunityString, int PduType, std::vector<std::string> *OidsRaw) {
+
+    SNMP::OIDList Oids;
+    for(const std::string& strOid : *OidsRaw){
+        Oids.push_back(SNMP::OID(strOid));
+    }
+
+    SNMP::Encoder snmp;
+    snmp.setupGetRequest( 1, CommunityString, PduType, Oids);
+    SNMP::StdByteVector bytes = snmp.encodeRequest();
+    return bytes;
 }

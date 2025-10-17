@@ -19,6 +19,8 @@
 
 #include "SnmpOtel_BL.h"
 #include "SnmpOtelBer.h"
+#include "SnmpOtelExport.h"
+
 #include "Handlers/SignalHandler.h"
 
 SnmpOtel_BL::SnmpOtel_BL() {
@@ -37,9 +39,16 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config) {
     std::vector<std::string> oids;
     ReadOidsFromFile(config.oids_file, oids);
 
-    auto* tmp2 = new SnmpOtelBer(1);
-    std::vector<unsigned char> msg = tmp2->CreateSnmpMessage(config.community, 1, &oids);
+    auto* berCreator = new SnmpOtelBer(1);
+//    std::vector<unsigned char> msg = berCreator->CreateSnmpMessage(config.community, 1, &oids);
 
+//    SnmpOtelExport tmp = SnmpOtelExport();
+//    std::string str = tmp.create_json("Ahoj");
+//
+//    tmp.SendHttpMessage("www.vut.cz",str);
+//    std::string str(msg.begin(), msg.end());
+
+    std::vector<unsigned char> msg = berCreator->procesuj_paket(config.community, 1, &oids);
 
     struct timeval tv;
     tv.tv_sec = config.timeout / 1000;
@@ -55,23 +64,24 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config) {
 
                 LastSendMessageTime = std::chrono::steady_clock::now();
                 try{
-                    int result = SendUdpMessage(config.target, std::to_string(config.port), msg, tv);
-                    if (result == EXIT_SUCCESS) {
+                    std::vector<char>* result = SendandReceiveUdpMessage(config.target, std::to_string(config.port),
+                                                                         msg, tv);
+                    if (result != nullptr) {
                         ActualCountOfRepeats = 0;
                         break;
                     } else if (ActualCountOfRepeats == config.retries - 1) {
                         throw std::runtime_error("Unable to receive message from snmp agent");
                     }
                 }catch(const std::runtime_error& e){
-                    free(tmp2);
+                    free(berCreator);
                     throw std::runtime_error(e.what());
                 }
             }
+//            SendandReceiveTcpMessage()
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    free(tmp2);
-    std::cout << "Successfully released memory" << std::endl;
+    free(berCreator);
     return EXIT_SUCCESS;
 }
 
@@ -93,7 +103,6 @@ void SnmpOtel_BL::ReadOidsFromFile(const std::string &filename, std::vector<std:
 
     inputFile.close();
 }
-
 // Remove white chars from string
 std::string SnmpOtel_BL::TrimStringOid(const std::string &s) {
     size_t start = s.find_first_not_of(" \t\n\r");
@@ -104,10 +113,12 @@ std::string SnmpOtel_BL::TrimStringOid(const std::string &s) {
     return s.substr(start, (end - start + 1));
 }
 
-int SnmpOtel_BL::SendUdpMessage(const std::string &target_ip, const std::string &target_port, const std::vector<unsigned char>& message, struct timeval &tv) {
+std::vector<char>* SnmpOtel_BL::SendandReceiveUdpMessage(const std::string &target_ip, const std::string &target_port, const std::vector<unsigned char>& message, struct timeval &tv) {
     struct addrinfo hints, *server_info, *p;
     int sockfd = EOF;
     int status;
+
+    std::vector<char> receivedMsg;
 
     std::memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -141,6 +152,9 @@ int SnmpOtel_BL::SendUdpMessage(const std::string &target_ip, const std::string 
 
     if(bytes_sent == EOF){
         std::cerr << "ERROR: Message was unable to send";
+        close(sockfd);
+        freeaddrinfo(server_info);
+        return nullptr;
     }else {
         int n;
         socklen_t len = sizeof(*p);
@@ -155,15 +169,14 @@ int SnmpOtel_BL::SendUdpMessage(const std::string &target_ip, const std::string 
         if (n == EOF) {
             close(sockfd);
             freeaddrinfo(server_info);
-            return EXIT_FAILURE;
+            return nullptr;
         }
-        buffer[n] = '\0';
-        std::cout << "Server :" << buffer << std::endl;
+        for (int i = 0; i < n; ++i) {
+            receivedMsg.push_back(buffer[i]);
+        }
     }
 
     close(sockfd);
     freeaddrinfo(server_info);
-    return EXIT_SUCCESS;
+    return &receivedMsg;
 }
-
-

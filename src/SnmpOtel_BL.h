@@ -19,7 +19,7 @@ private:
     void ReadOidsFromFile(const std::string& filename, std::vector<std::string> &oids);
     std::string TrimStringOid(const std::string& s);
 
-    int SendUdpMessage(const std::string& target_ip, const std::string& target_port, const std::vector<unsigned char>& message, struct timeval &tv);
+    std::vector<char>* SendandReceiveUdpMessage(const std::string& target_ip, const std::string& target_port, const std::vector<unsigned char>& message, struct timeval &tv);
 };
 
 
