@@ -4,6 +4,10 @@ venv
 
 /cmake-build-debug/
 
+build
+
+settings.json
+
 # Default ignored files
 /shelf/
 /workspace.xml

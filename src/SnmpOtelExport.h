@@ -12,7 +12,7 @@ public:
     int SendHttpMessage(const std::string& target_ip, const std::string& message);
 
 private:
-
+    int parse_otlp_url(const std::string& full_url, std::string& base, std::string& path);
 };
 
 
