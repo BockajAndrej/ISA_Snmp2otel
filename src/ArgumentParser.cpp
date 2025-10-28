@@ -10,15 +10,13 @@
 #include "Structs/SnmpOtelErrors.h"
 
 SnmpOtelConfig ArgumentParser::Parse(int argc, char **argv) {
-    auto config = SnmpOtelConfig{}; // Reset to default
+    auto config = SnmpOtelConfig{};
 
-    // Convert argv to std::vector (for iteration)
     std::vector<std::string> args(argv + 1, argv + argc);
 
     for (size_t i = 0; i < args.size(); ++i) {
         const std::string& arg = args[i];
 
-        // Process flags with value
         if (arg == "-t") {
             config.target = GetNextValue(args, i, "-t");
         } else if (arg == "-o") {
@@ -36,7 +34,7 @@ SnmpOtelConfig ArgumentParser::Parse(int argc, char **argv) {
         } else if (arg == "-p") {
             config.port = ParseIntValue(args, i, "-p");
         }
-        // Process boolean flags
+
         else if (arg == "-v") {
             config.verbose = true;
         } else if (arg == "-h" || arg == "--help") {
@@ -45,7 +43,7 @@ SnmpOtelConfig ArgumentParser::Parse(int argc, char **argv) {
         }
     }
 
-    // Kontrola povinných argumentov
+    // Required 
     CheckRequired("-t", config.target);
     CheckRequired("-o", config.oids_file);
     CheckRequired("-e", config.endpoint);

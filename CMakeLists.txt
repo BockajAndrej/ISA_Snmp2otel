@@ -10,6 +10,11 @@ add_executable(snmpServer
         libs/BasicSnmp/lib/snmpencoder.cpp
 )
 
+add_executable(otelJsonUnitTests
+        tests/UnitTests/otelJsonUnitTests.cpp
+        src/SnmpOtelJson.cpp
+)
+
 add_executable(snmp2otel
         main.cpp
         src/ArgumentParser.cpp
@@ -17,7 +22,8 @@ add_executable(snmp2otel
 
         src/Structs/SnmpOtelConfig.h
         src/Structs/SnmpOtelErrors.h
-        src/Structs/SnmpOtelExportConfig.h
+        src/Structs/OpenTelemetryMetrics.h
+        src/Structs/SnmpOtelOidConfig.h
 
         src/Handlers/SignalHandler.cpp
         src/Handlers/SignalHandler.h
@@ -37,6 +43,9 @@ add_executable(snmp2otel
 
         src/SnmpOtelExport.cpp
         src/SnmpOtelExport.h
+
+        src/SnmpOtelMetrics.cpp
+        src/SnmpOtelMetrics.h
 )
 
 target_include_directories(snmp2otel PRIVATE
@@ -48,4 +57,8 @@ target_include_directories(snmp2otel PRIVATE
 target_include_directories(snmpServer PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/lib
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_include_directories(otelJsonUnitTests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/acutest
 )

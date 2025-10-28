@@ -1,0 +1,50 @@
+{
+    "resourceMetrics": [
+        {
+            "resource": {
+                "attributes": [
+                    {
+                        "key": "service.name",
+                        "value": {
+                            "string_value": "snmp2otel"
+                        }
+                    },
+                    {
+                        "key": "host.name",
+                        "value": {
+                            "string_value": "my-test-host"
+                        }
+                    }
+                ]
+            },
+            "scopeMetrics": [
+                {
+                    "metrics": [
+                        {
+                            "description": "Aktuálne vyťaženie CPU",
+                            "gauge": {
+                                "data_points": [
+                                    {
+                                        "as_double": 45.5,
+                                        "time_unix_nano": "1700000000000000000"
+                                    },
+                                    {
+                                        "as_double": 55.0,
+                                        "start_time_unix_nano": "1700000000000000000",
+                                        "time_unix_nano": "1700000001000000000"
+                                    }
+                                ]
+                            },
+                            "name": "cpu_utilization",
+                            "unit": "%"
+                        }
+                    ],
+                    "scope": {
+                        "name": "snmp2otel.exporter",
+                        "version": "1.0.0"
+                    }
+                }
+            ]
+        }
+    ]
+}

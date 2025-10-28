@@ -9,6 +9,11 @@ int main(int argc, char *argv[]) {
 
     try{
         config = parser.Parse(argc, argv);
+        if(config.help_requested){
+            parser.PrintHelp("snmp2otel");
+            return EXIT_SUCCESS;
+        }
+
         SnmpOtel_BL BL_logic;
 
         BL_logic.MainFnc(config);

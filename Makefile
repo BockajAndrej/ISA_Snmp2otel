@@ -1,6 +1,6 @@
 BUILD_DIR := build
 TARGET_EXECUTABLE := snmp2otel
-TEST_EXECUTABLE := snmpServer
+TEST_EXECUTABLE := otelJsonUnitTests
 
 .PHONY: all build run test clean setup
 
@@ -13,7 +13,7 @@ build: setup
 	@echo "Start compilation (make)..."
 	@(cd $(BUILD_DIR) && make -j$(shell nproc))
 
-all: build run test
+all: build test run 
 
 run: build
 	@echo "Start main program: ./$(BUILD_DIR)/$(TARGET_EXECUTABLE)"

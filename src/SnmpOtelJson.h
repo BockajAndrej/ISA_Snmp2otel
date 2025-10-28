@@ -6,15 +6,14 @@
 #define SNMP2OTEL_SNMPOTELJSON_H
 
 #include "../libs/nlohmann/json.hpp"
-#include "Structs/SnmpOtelExportConfig.h"
+#include "Structs/OpenTelemetryMetrics.h"
 
 using json = nlohmann::json;
 
 class SnmpOtelJson {
 public:
     explicit SnmpOtelJson();
-    std::string CreateOtlpMetricsJson(struct SnmpOtelExportConfig& config);
-
+    std::string CreateOtlpMetricsJson(const OpenTelemetryMetrics& otelMetrics);
 private:
 
 };

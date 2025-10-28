@@ -5,62 +5,78 @@
 
 SnmpOtelJson::SnmpOtelJson() = default;
 
-std::string SnmpOtelJson::CreateOtlpMetricsJson(struct SnmpOtelExportConfig& config) {
-    // Timestamp
-    auto now = std::chrono::system_clock::now();
-    auto nano_time = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
-    std::string time_unix_nano = std::to_string(nano_time);
+std::string SnmpOtelJson::CreateOtlpMetricsJson(const OpenTelemetryMetrics &otelMetrics)
+{
+    json root_json;
+    json resource_metrics_array = json::array();
 
-    // Resource Attributes
-    json resource_attributes = json::array();
+    for (const auto& resourceMetrics : otelMetrics.resourceMetrics) {
+        json resource_attributes_array = json::array();
+        
+        // 1. Resource Attributes
+        for (const auto& attr : resourceMetrics.resource.attributes) {
+            resource_attributes_array.push_back({
+                {"key", attr.key},
+                {"value", {{"string_value", attr.value}}}
+            });
+        }
 
-    resource_attributes.push_back({
-                                          {"key", "service.name"},
-                                          {"value", {{"string_value", config.service_name}}}
-                                  });
+        json scope_metrics_array = json::array();
+        for (const auto& scopeMetrics : resourceMetrics.scopeMetrics) {
+            
+            json metrics_array = json::array();
+            for (const auto& metric : scopeMetrics.metrics) {
+                
+                json data_points_array = json::array();
+                for (const auto& dataPoint : metric.dataPoints) {
+                    json dp_attributes_array = json::array();
+                    
+                    // 3. Data Point
+                    json data_point_json = {
+                        {"time_unix_nano", dataPoint.timeUnixNano},
+                        {"as_double", dataPoint.value}
+                    };
+                    
+                    // Len ak je startTimeUnixNano neprázdne, pridá sa (Gauge ho zvyčajne nemá)
+                    if (!dataPoint.startTimeUnixNano.empty()) {
+                        data_point_json["start_time_unix_nano"] = dataPoint.startTimeUnixNano;
+                    }
+                    
+                    data_points_array.push_back(data_point_json);
+                }
 
-    // Data
-    json data_point_attributes = json::array();
-    for (const auto& [key, value] : config.attributes) {
-        data_point_attributes.push_back({
-                                                {"key", key},
-                                                {"value", {{"string_value", value}}}
-                                        });
+                // 4. Metric (Gauge)
+                metrics_array.push_back({
+                    {"name", metric.name},
+                    {"description", metric.description},
+                    {"unit", metric.unit},
+                    {metric.type, {
+                        {"data_points", data_points_array}
+                    }}
+                });
+            }
+
+            // 5. Scope Metrics
+            scope_metrics_array.push_back({
+                {"scope", {
+                    {"name", scopeMetrics.scope.name},
+                    {"version", scopeMetrics.scope.version}
+                }},
+                {"metrics", metrics_array}
+            });
+        }
+
+        // 6. Resource Metrics
+        resource_metrics_array.push_back({
+            {"resource", {
+                {"attributes", resource_attributes_array}
+            }},
+            {"scopeMetrics", scope_metrics_array}
+        });
     }
 
-    json data_point = {
-            {"time_unix_nano", time_unix_nano},
-            {"as_double", config.metric_value},
-            {"attributes", data_point_attributes}
-    };
+    // 7. Final JSON
+    root_json["resourceMetrics"] = resource_metrics_array;
 
-    // Final JSON
-    json metrics_json = {
-            {"resource_metrics", {
-                    {
-                            // Resource
-                            {"resource", {
-                                    {"attributes", resource_attributes}
-                            }},
-                            // Scope Metrics
-                            {"scope_metrics", {
-                                    {
-                                            {"scope", {{"name", "snmp2otel.exporter"}}},
-                                            {"metrics", {
-                                                    {
-                                                            {"name", config.metric_name},
-                                                            {"unit", config.unit},
-                                                            {"description", "Metric exported from SNMP device"},
-                                                            // Gauge Metrics
-                                                            {"gauge", {
-                                                                    {"data_points", {data_point}}
-                                                            }}
-                                                    }
-                                            }}
-                                    }
-                            }}
-                    }
-            }}
-    };
-    return metrics_json.dump();
+    return root_json.dump();
 }

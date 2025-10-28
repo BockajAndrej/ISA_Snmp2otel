@@ -13,7 +13,7 @@ processors:
         match_type: strict
         resource_attributes:
           - key: service.name
-            value: "ServerName"
+            value: "snmp2otel"
 
   # Voliteľné: Vždy je dobré mať nejaký batching (dávkovanie)
   batch:

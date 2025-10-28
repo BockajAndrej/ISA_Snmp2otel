@@ -27,7 +27,7 @@ int SnmpOtelClient::UpdateData(std::vector<unsigned char> &receivedMsg, const st
     hints.ai_socktype = SOCK_DGRAM;
 
     if ((status = getaddrinfo(target_ip.c_str(), target_port.c_str(), &hints, &server_info)) != 0) {
-        throw std::runtime_error("ERROR at getaddrinfo for '" + target_ip + "': " + gai_strerror(status));
+        throw std::runtime_error("Error at getaddrinfo for '" + target_ip + "': " + gai_strerror(status));
     }
 
     for(p = server_info; p != nullptr; p = p->ai_next) {

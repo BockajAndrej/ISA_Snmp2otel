@@ -27,7 +27,7 @@ int SnmpOtelExport::parse_otlp_url(const std::string &full_url, std::string &bas
     // Hlada /v1/metrics - alebo prvu cestu za hostom/portom
     size_t protocol_end = full_url.find("//");
     if (protocol_end == std::string::npos) {
-        protocol_end = 0; // Začiatok
+        protocol_end = 0; // Zaciatok
     } else {
         protocol_end += 2;
     }
