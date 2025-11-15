@@ -1,7 +1,25 @@
-# Snmp2otel
+# Snmp2otel - Exportér SNMP Gauge metrik do OpenTelemetry (OTEL)
 
-## Úvod
+## Zadanie
+Napište program snmp2otel, který bude v pravidelných intervalech dotazovat zadaný SNMP agent (zařízení) na vybrané OID a naměřené hodnoty exportovat jako OTEL Metrics pomocí rozhraní OTLP/HTTP (JSON) na zadaný OTEL endpoint (typicky OpenTelemetry Collector). Analýza a sestavení SNMP v2c zpráv i OTLP/HTTP JSON těla může být implementována libovolným způsobem dle vašeho návrhu. Uvažujte komunikaci přes UDP/161 pro SNMP (klient) a TCP/HTTP pro export (HTTPS volitelné v rozšíření).
 
+Program musí podporovat pouze metriky typu Gauge.
+
+### Obmedzenia
+- Povoleny jsou libovolné knihovny.
+- Instalace knihoven do systému není povolena; projekt se musí přeložit standardně pomocí Makefile.
+- Program poběží bez root oprávnění; nesmí vyžadovat privilegované porty pro lokální naslouchání.
+
+### Podporované protokoly a datové typy
+- SNMP v2c: podporujte pouze operaci Get pro skalární OID zakončená .0.
+- ASN.1 BER: implementujte minimum potřebné pro SNMPv2c Get/Response (INTEGER, OCTET STRING, OID, SEQUENCE).
+- OTEL export: data se posílají pomocí OTLP/HTTP (JSON).
+Každý naměřený údaj je reprezentován jako Gauge.
+
+### Výstup aplikace
+- V základním režimu program nic nevypisuje.
+- Ve verbose režimu (-v) vypisujte ladicí informace (dotazy, odpovědi, export).
+- Chybové hlášky vypisujte na standardní chybový výstup.
 
 ## Protokol SNMPv2: Popis Funkčnosti
 Protokol SNMPv2 (Simple Network Management Protocol verzia 2) je rozšírená a vylepšená verzia štandardného protokolu pre správu a monitorovanie sieťových zariadení, ako sú smerovače, prepínače, servery a tlačiarne. Umožňuje centrálnemu manažérovi (NMS - Network Management Station) získavať informácie a meniť konfiguráciu spravovaných zariadení.
@@ -75,23 +93,59 @@ Umožňuje odosielať dáta do rôznych systémov (Prometheus, Grafana, Jaeger, 
 
 
 ## Implementácia
+Pre posielanie SNMPv2c správ a získavanie informácií z agentov využívame knižnicu BasicSNMP (silderan/BasicSNMP). Táto knižnica implementuje nevyhnutné funkcie pre zostavenie a spracovanie SNMP správ v správnom formáte.
+
+#### Generovanie a Odosielanie Požiadaviek
+1. Využitie Knižnice BasicSNMP: Knižnica je primárne zodpovedná za vytváranie a kódovanie SNMP správ, ktoré slúžia na získavanie informácií o sieťových metrikách pomocou ich unikátnych OID (Object Identifier).
+2. Kódovanie ASN.1 BER: Pre zabezpečenie, že správa je formálne a štrukturálne správna podľa štandardu SNMP, knižnica využíva kódovanie ASN.1 BER (Basic Encoding Rules). Tento proces transformuje dátovú štruktúru požiadavky (ktorá zahŕňa Community String, verziu protokolu a požadované OIDs) do binárneho formátu vhodného pre prenos.
+3. Prenos K Agentovi: Takto zostavená binárna SNMP správa je odoslaná na cieľového SNMP Agenta, ktorý beží na spravovanom sieťovom zariadení.
+
+![Zdroj: https://www.ranecommercial.com/legacy/note161.html](Images/snmpV2cPacket.png)
 
 ## Použitie
 ```bash
-snmp2otel -t target [-C community] -o oids_file -e endpoint [-i interval] [-r retries] [-T timeout] [-p port] [-v]
+snmp2otel -t target [-C community] -o oids_file -e endpoint [-i interval] [-r retries] [-T timeout] [-p port] [-v] [-O oids_formatingMappingFile]
 ```
 
-#### Parametre
--t target — IP adresa alebo DNS meno SNMP agenta.
--C community — SNMP v2c community string. Predvolené: public.
--o oids_file — Súbor so zoznamom OID, ktoré sa majú dotazovať.
--e endpoint — URL OTEL endpointu pre export (OTLP/HTTP JSON), napr. http://localhost:4318/v1/metrics.
--i interval — Perióda dotazovania v sekundách (> 0). Predvolené: 10.
--r retries — Počet retransmisií pri timeoutu. Predvolené: 2.
--T timeout — Timeout SNMP dotazu v ms. Predvolené: 1000.
--p port — UDP port SNMP agenta. Predvolené: 161.
--v — Verbose režim.
+### Parametre
+
+-t target — IP adresa nebo DNS jméno SNMP agenta.  
+-C community — SNMP v2c community string. Výchozí: public.  
+-o oids_file — soubor se seznamem OID, které se mají dotazovat.  
+-e endpoint — URL OTEL endpointu pro export (OTLP/HTTP JSON), např. http://localhost:4318/v1/metrics.  
+-i interval — perioda dotazování v sekundách (> 0). Výchozí: 10.  
+-r retries — počet retransmisí při timeoutu. Výchozí: 2.  
+-T timeout — timeout SNMP dotazu v ms. Výchozí: 1000.  
+-p port — UDP port SNMP agenta. Výchozí: 161.  
+-v — verbose režim.  
+
+### Formát souboru se seznamem OID
+
+Textový ASCII soubor: jedno OID na řádek, numerická forma. Prázdné řádky a řádky začínající # ignorujte.
+
+```
+# System uptime
+1.3.6.1.2.1.1.3.0
+```
+
+### Formát mapping souboru (volitelný)
+```
+{
+  "1.3.6.1.2.1.1.3.0": { "name": "snmp.sysUpTime", "unit": "ms", "type": "gauge" }
+}
+```
+*type* může být pouze gauge. Pokud položka chybí, použije se název odvozený z OID.
+
 ## Použité technológie
 
 ## Testovanie
 
+### Zdroje
+
+SnmpV2c  
+https://www.ranecommercial.com/legacy/note161.html
+https://www.dpstele.com/snmp/tutorial/packet-types-structure.php
+https://support.huawei.com/enterprise/en/doc/EDOC1100174721/684b4c64/snmpv1
+
+OTEL  
+https://stackoverflow.com/questions/18119428/c-how-to-exit-out-of-a-while-loop-recvfrom

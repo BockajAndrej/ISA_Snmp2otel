@@ -33,7 +33,6 @@ SnmpOtel_BL::SnmpOtel_BL()
 
 int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
 {
-
     SignalHandler monitor;
     monitor.register_handler();
 
@@ -71,10 +70,27 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
                 LastSendMessageTime = std::chrono::steady_clock::now();
                 try
                 {
+                    if (config.verbose)
+                    {
+                        std::cout << "--- REQUEST ---\n"
+                                  << "Target: " << config.target << "\n"
+                                  << "Port:   " << config.port << "\n"
+                                  << "Msg:    " <<reinterpret_cast<const char*>(msg.data()) << "\n"
+                                  << "---------------" << std::endl;
+                    }
+
                     int status = snmpClient.UpdateData(receivedMsg, config.target, std::to_string(config.port),
                                                        msg, tv);
                     if (status == EXIT_SUCCESS)
                     {
+                        if (config.verbose)
+                        {
+                            std::cout << "--- ANSWER ---\n"
+                                      << "From: " << config.target << "\n"
+                                      << "Port:   " << config.port << "\n"
+                                      << "Recv msg:    " << receivedMsg.toStdString() << "\n"
+                                      << "---------------" << std::endl;
+                        }
                         snmpBer.DecodeData(otelData, rawMetrics, receivedMsg, config);
                         ActualCountOfRepeats = 0;
                         break;
@@ -95,6 +111,15 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
 
             std::string jsonToSend = snmpJsonCreator.CreateOtlpMetricsJson(otelData);
             std::cout << jsonToSend << std::endl;
+
+            if (config.verbose)
+            {
+                std::cout << "--- EXPORT ---\n"
+                          << "Target: " << config.endpoint << "\n"
+                          << "json:    " << jsonToSend << "\n"
+                          << "---------------" << std::endl;
+            }
+
             snmpExport.SendHttpMessage(config.endpoint, jsonToSend);
         }
         if ((std::chrono::seconds(config.interval) - (std::chrono::steady_clock::now() - LastSendMessageTime)) > std::chrono::milliseconds(100))

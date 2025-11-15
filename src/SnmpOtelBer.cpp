@@ -22,7 +22,6 @@ SNMP::StdByteVector SnmpOtelBer::CreateSnmpMsg(const std::string &CommunityStrin
     SNMP::OIDList normalizedOids;
     for (const std::string &strOid : *OidsRaw)
     {
-        std::cout << "OID: " << strOid << std::endl;
         normalizedOids.push_back(SNMP::OID(strOid));
     }
 
