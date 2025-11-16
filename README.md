@@ -93,14 +93,50 @@ Umožňuje odosielať dáta do rôznych systémov (Prometheus, Grafana, Jaeger, 
 
 
 ## Implementácia
-Pre posielanie SNMPv2c správ a získavanie informácií z agentov využívame knižnicu BasicSNMP (silderan/BasicSNMP). Táto knižnica implementuje nevyhnutné funkcie pre zostavenie a spracovanie SNMP správ v správnom formáte.
+Táto sekcia detailne popisuje architektúru programu a techniky implementácie použité pre zber metrík prostredníctvom protokolu SNMPv2c a ich následný export vo formáte OTEL/HTTP/JSON.
 
-#### Generovanie a Odosielanie Požiadaviek
-1. Využitie Knižnice BasicSNMP: Knižnica je primárne zodpovedná za vytváranie a kódovanie SNMP správ, ktoré slúžia na získavanie informácií o sieťových metrikách pomocou ich unikátnych OID (Object Identifier).
-2. Kódovanie ASN.1 BER: Pre zabezpečenie, že správa je formálne a štrukturálne správna podľa štandardu SNMP, knižnica využíva kódovanie ASN.1 BER (Basic Encoding Rules). Tento proces transformuje dátovú štruktúru požiadavky (ktorá zahŕňa Community String, verziu protokolu a požadované OIDs) do binárneho formátu vhodného pre prenos.
-3. Prenos K Agentovi: Takto zostavená binárna SNMP správa je odoslaná na cieľového SNMP Agenta, ktorý beží na spravovanom sieťovom zariadení.
+### 1. Konfigurácia a Dátové Štruktúry
+Všetky vstupné a konfiguračné parametre programu sú centralizované v dátovej štruktúre SnmpOtelConfig. Táto štruktúra slúži ako jediný zdroj pravdy pre nastavenia súvisiace s cieľovými SNMP Agentmi, OID (Object Identifiers) a koncovými bodmi (endpoints) pre export OTEL.
+
+Logika aplikácie je enkapsulovaná v triede SnmpOtel_BL (Business Logic), čím je zabezpečená správna modularita a oddelenie obchodnej logiky od prezentačnej a sieťovej vrstvy.
+
+### 2. Komunikácia s SNMP Agentmi (SNMPv2c)
+Získavanie surových metrík zo sieťových zariadení je realizované prostredníctvom protokolu SNMPv2c.
 
 ![Zdroj: https://www.ranecommercial.com/legacy/note161.html](Images/snmpV2cPacket.png)
+
+#### A. Generovanie a Kódovanie SNMPv2c Správ
+Knižnica pre Dátové Transformácie: Pre spracovanie dátových štruktúr SNMP využívame knižnicu BasicSNMP (silderan/BasicSNMP). Knižnica je primárne zodpovedná za kódovanie a dekódovanie dát v súlade s oficiálnymi štandardmi protokolu.
+
+Kódovanie ASN.1 BER: Knižnica implementuje algoritmus ASN.1 BER (Basic Encoding Rules). Tento proces je nevyhnutný pre transformáciu internej dátovej štruktúry požiadavky (ktorá zahŕňa verziu protokolu, reťazec komunity – Community String a požadované OID) do korektného binárneho formátu. Tento formát je následne pripravený na bezchybný prenos cez sieť.
+
+#### B. Sieťový Prenos
+Po zakódovaní správy knižnicou BasicSNMP prebieha sieťová komunikácia prostredníctvom vlastného UDP klienta, ktorý je implementovaný v triede SnmpOtelClient.
+
+Klient preberá binárne zakódovanú požiadavku (napr. GetRequest) a odosiela ju pomocou protokolu UDP na štandardný port 161 cieľového SNMP Agenta.
+
+Po odoslaní čaká klient na prichádzajúcu UDP odpoveď, ktorá je následne odovzdaná späť knižnici BasicSNMP na dekódovanie, čím sa získajú finálne hodnoty metrík.
+
+### 3. Transformácia a Export Metrík (OTEL/HTTP/JSON)
+Po úspešnom zbere dát sú SNMP hodnoty transformované do štandardizovaného formátu OpenTelemetry (OTEL).
+
+#### A. Generovanie Dátovej Štruktúry OTEL
+Modelovanie Metrík: Pre zabezpečenie zhody s OTEL OTLP/JSON špecifikáciou je definovaná vlastná hierarchická štruktúra OpenTelemetryMetrics. Táto štruktúra vychádza zo vzorového dátového modelu definovaného v OpenTelemetry protokole, konkrétne zo špecifikácie:
+
+https://github.com/open-telemetry/opentelemetry-proto/blob/main/examples/metrics.json
+
+Konverzia na JSON: Transformácia dátovej štruktúry OpenTelemetryMetrics do finálneho JSON formátu je zabezpečená pomocou knižnice nlohmann/json. Špecificky, funkcia SnmpOtelJson::CreateOtlpMetricsJson vykonáva túto konverziu. Funkcia vracia výsledný JSON objekt ako std::string, typicky bez formátovania (bez odsadenia) pre optimalizáciu sieťového prenosu a jednoduché porovnanie dát.
+
+#### B. Export Metrík
+Export dát je riadený triedou SnmpOtelExport, ktorá využíva knižnicu httplib.h (od Yuji Hirose) pre robustnú a spoľahlivú HTTP/S komunikáciu.
+
+Funkcia SnmpOtelExport::SendHttpMessage prevezme JSON std::string metrík.
+
+Následne iniciuje HTTP POST požiadavku (s Content-Type: application/json) na nakonfigurovaný koncový bod OTEL Collectora alebo priameho monitorovacieho backendu. Týmto je zabezpečený finálny prenos spracovaných telemetrických dát.
+
+### 4. Spracovanie Signálov
+Pre riadne ukončenie programu a uvoľnenie zdrojov je implementovaný mechanizmus spracovania signálov. Trieda SignalHandler zabezpečuje registráciu prerušenia (napr. kombinácia kláves Ctrl+C). V prípade detekcie signálu je vyvolaná obslužná funkcia, ktorá iniciuje riadené ukončenie logiky programu, čím sa predchádza nekonzistentnému stavu alebo poškodeniu dát.
+
 
 ## Použitie
 ```bash
@@ -134,11 +170,19 @@ Textový ASCII soubor: jedno OID na řádek, numerická forma. Prázdné řádky
   "1.3.6.1.2.1.1.3.0": { "name": "snmp.sysUpTime", "unit": "ms", "type": "gauge" }
 }
 ```
-*type* může být pouze gauge. Pokud položka chybí, použije se název odvozený z OID.
+- *type* může být pouze gauge. Pokud položka chybí, použije se název odvozený z OID.
 
 ## Použité technológie
 
 ## Testovanie
+
+Ako prvotne testovanie bolo potrebne overit funkcnost SNMPV2c a nasledne overenie OTEL json.
+
+pre overenie spravnej funkcie snmpV2c sme si vytvorili snmpAgenta v c++ ktory sluzil na posielanie konstantnych metrik pre vyziadane OIDs. S tymto sposobom sme si overili funkcnost pre posielanie snmp cez udp a nasledne spracovanie spravy od snmpagenta.
+
+neskor sme prisli na to ze je mozne vyuzivat snmpagent na skolskom servery merlina@vutbr.cz - lepsi referencny server.
+
+
 
 ### Zdroje
 
@@ -149,3 +193,4 @@ https://support.huawei.com/enterprise/en/doc/EDOC1100174721/684b4c64/snmpv1
 
 OTEL  
 https://stackoverflow.com/questions/18119428/c-how-to-exit-out-of-a-while-loop-recvfrom
+https://github.com/open-telemetry/opentelemetry-proto/blob/main/examples/metrics.json
