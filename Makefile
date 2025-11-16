@@ -15,11 +15,11 @@ build: setup
 
 all: build test run 
 
-run: build
+run:
 	@echo "Start main program: ./$(BUILD_DIR)/$(TARGET_EXECUTABLE)"
-	./$(BUILD_DIR)/$(TARGET_EXECUTABLE) -t 127.0.0.1 -e http://localhost:4318/v1/metrics -o ./Data/Inputs/oids_file.txt -p 16161 -r 10 -T 10000 -v
+	./$(BUILD_DIR)/$(TARGET_EXECUTABLE) -t 127.0.0.1 -e http://localhost:4318/v1/metrics -o ./Data/Inputs/oids_file.txt -p 161 -r 10 -T 10000 -v
 
-test: build
+test:
 	@echo "Start tests program: ./$(BUILD_DIR)/$(TEST_EXECUTABLE)"
 	./$(BUILD_DIR)/$(TEST_EXECUTABLE)
 
