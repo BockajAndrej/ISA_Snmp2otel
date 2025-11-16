@@ -1,6 +1,8 @@
 //
 // Created by andrej.bockaj on 17. 10. 2025.
+// login: xbockaa00
 //
+
 
 #include <cstring>
 #include <vector>
@@ -30,6 +32,7 @@ int SnmpOtelClient::UpdateData(std::vector<unsigned char> &receivedMsg, const st
         throw std::runtime_error("Error at getaddrinfo for '" + target_ip + "': " + gai_strerror(status));
     }
 
+    // Vytvorenie soketu pre komunikaciu
     for(p = server_info; p != nullptr; p = p->ai_next) {
         if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) != EOF) {
             setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
@@ -43,6 +46,7 @@ int SnmpOtelClient::UpdateData(std::vector<unsigned char> &receivedMsg, const st
         throw std::runtime_error("Nepodarilo sa vytvoriť socket pre žiadnu adresu.");
     }
 
+    // Poslanie UDP datagramu
     ssize_t bytes_sent = sendto(
             sockfd,
             message.data(),
@@ -62,6 +66,7 @@ int SnmpOtelClient::UpdateData(std::vector<unsigned char> &receivedMsg, const st
         socklen_t len = sizeof(*p);
         char buffer[MAXLEN];
 
+        // V pripade uspesneho poslania chceme prijat odpoved
         n = recvfrom(sockfd,
                      (char *) buffer,
                      sizeof(buffer) - 1,

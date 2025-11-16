@@ -1,3 +1,9 @@
+//
+// Created by andrej.bockaj on 17. 10. 2025.
+// login: xbockaa00
+//
+
+
 #include "SnmpOtelMetrics.h"
 
 #include <iostream>
@@ -59,7 +65,8 @@ std::map<std::string, SnmpOtelOidConfig> SnmpOtelMetrics::readFormatOidsFile(con
 
     if (!file.is_open())
     {
-        std::cerr << "INFO: Nepodarilo sa otvorit subor s formatmi: " << filename << ". Budu pouzite len default hodnoty." << std::endl;
+        if(filename != "")
+            std::cerr << "ERROR INFO: Nepodarilo sa otvorit subor s formatmi: " << filename << ". Budu pouzite len default hodnoty." << std::endl;
         return formatMetrics;
     }
 

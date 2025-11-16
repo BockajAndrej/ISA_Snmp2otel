@@ -1,6 +1,8 @@
 //
 // Created by andrej.bockaj on 14. 10. 2025.
+// login: xbockaa00
 //
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,9 +15,11 @@
 
 SnmpOtelBer::SnmpOtelBer(int SnmpVersion)
 {
+    // Len definujeme verziu ktora by sa nemala menit pri rovnakej instancii SNMP creatora
     this->SnmpVersion = SnmpVersion;
 }
 
+// Funkcia pre naplnenie hodnot SNMP paketu
 SNMP::StdByteVector SnmpOtelBer::CreateSnmpMsg(const std::string &CommunityString, int PduType, std::vector<std::string> *OidsRaw)
 {
 
@@ -29,7 +33,7 @@ SNMP::StdByteVector SnmpOtelBer::CreateSnmpMsg(const std::string &CommunityStrin
     snmp.setupGetRequest(SnmpVersion, CommunityString, PduType, normalizedOids);
     return snmp.encodeRequest();
 }
-
+// Funkcia plniaca OTEL strukturu z raw SNMP dat (riesi dokodovanie)
 int SnmpOtelBer::DecodeData(OpenTelemetryMetrics &otelMetrics, std::map<std::string, SnmpOtelOidConfig> &oidMetrics, SNMP::StdByteVector bytes, const SnmpOtelConfig &config)
 {
     SNMP::Encoder snmp;
@@ -49,6 +53,7 @@ int SnmpOtelBer::DecodeData(OpenTelemetryMetrics &otelMetrics, std::map<std::str
     sm.scope.name = "snmp2otel.exporter";
     sm.scope.version = "1.0.0";
 
+    // Spracuje vsetky OIDS ktore snmpAgent zaslal
     for (const auto &asn1Varbind : snmp.varbindList())
     {
         std::string metricName = asn1Varbind.oid().toStdString();
@@ -56,6 +61,7 @@ int SnmpOtelBer::DecodeData(OpenTelemetryMetrics &otelMetrics, std::map<std::str
         double value = 0.0;
         std::string valueStr;
 
+        // Ukladanie podla typu (Riesime hlavne Gauge32)
         switch (asn1Varbind.asn1Variable().type())
         {
         case ASN1TYPE_NULL:
@@ -64,7 +70,6 @@ int SnmpOtelBer::DecodeData(OpenTelemetryMetrics &otelMetrics, std::map<std::str
         case ASN1TYPE_IA5String:
         case ASN1TYPE_VideoString:
             valueStr = asn1Varbind.asn1Variable().toStdString();
-
             break;
         case ASN1TYPE_INTEGER:
         case ASN1TYPE_Integer64:
@@ -77,6 +82,8 @@ int SnmpOtelBer::DecodeData(OpenTelemetryMetrics &otelMetrics, std::map<std::str
         default:
             break;
         }
+
+        // Plnenie datovej casti OTEL struktury
 
         if (!otelMetrics.resourceMetrics.empty())
         {
@@ -122,6 +129,7 @@ std::string SnmpOtelBer::getCurrentTimeUnixNano()
     return std::to_string(nano_since_epoch);
 }
 
+// Funkcia odstranujuca bodku pred OID (po dekodovani kniznica BasicSnmp pridava bodku pred OID)
 std::string SnmpOtelBer::removeLeadingDot(const std::string &oid)
 {
     if (!oid.empty() && oid[0] == '.')

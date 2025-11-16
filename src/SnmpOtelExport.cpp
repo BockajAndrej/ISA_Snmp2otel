@@ -1,15 +1,19 @@
 //
 // Created by andrej.bockaj on 15. 10. 2025.
+// login: xbockaa00
 //
+
 
 #include "SnmpOtelExport.h"
 
 #include "../libs/httplib/httplib.h"
 
+//Funkcia pre poslanie stringu na urcity endpint
 int SnmpOtelExport::SendHttpMessage(const std::string &target_ip, const std::string &message) {
 
     std::string base, path;
 
+    // Rozdelenie adresy na base a endpoint
     parse_otlp_url(target_ip, base, path);
 
     httplib::Client cli(base);
@@ -22,9 +26,9 @@ int SnmpOtelExport::SendHttpMessage(const std::string &target_ip, const std::str
     }
 }
 
+// Hlada prvu cestu za hostom/portom
 int SnmpOtelExport::parse_otlp_url(const std::string &full_url, std::string &base, std::string &path)
 {
-    // Hlada /v1/metrics - alebo prvu cestu za hostom/portom
     size_t protocol_end = full_url.find("//");
     if (protocol_end == std::string::npos) {
         protocol_end = 0; // Zaciatok

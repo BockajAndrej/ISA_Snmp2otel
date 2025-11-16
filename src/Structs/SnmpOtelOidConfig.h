@@ -1,9 +1,15 @@
+//
+// Created by andrej.bockaj on 17. 10. 2025.
+// login: xbockaa00
+//
 
 #ifndef SNMP2OTEL_SNMPOTELOIDCONFIG_H
 #define SNMP2OTEL_SNMPOTELOIDCONFIG_H
 
 #include <string>
 #include <map>
+
+//Struktura definujuca oid s volitelnymi atributmi z format mapping oid suboru
 
 struct SnmpOtelOidConfig
 {

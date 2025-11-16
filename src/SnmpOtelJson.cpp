@@ -1,10 +1,13 @@
 //
 // Created by andrej.bockaj on 17. 10. 2025.
+// login: xbockaa00
 //
+
 #include "SnmpOtelJson.h"
 
 SnmpOtelJson::SnmpOtelJson() = default;
 
+// Funkcia na prevod OTEL struktury na string s formatom json 
 std::string SnmpOtelJson::CreateOtlpMetricsJson(const OpenTelemetryMetrics &otelMetrics)
 {
     json root_json;
@@ -13,7 +16,7 @@ std::string SnmpOtelJson::CreateOtlpMetricsJson(const OpenTelemetryMetrics &otel
     for (const auto& resourceMetrics : otelMetrics.resourceMetrics) {
         json resource_attributes_array = json::array();
         
-        // 1. Resource Attributes
+        // Resource Attributes
         for (const auto& attr : resourceMetrics.resource.attributes) {
             resource_attributes_array.push_back({
                 {"key", attr.key},
@@ -31,13 +34,13 @@ std::string SnmpOtelJson::CreateOtlpMetricsJson(const OpenTelemetryMetrics &otel
                 for (const auto& dataPoint : metric.dataPoints) {
                     json dp_attributes_array = json::array();
                     
-                    // 3. Data Point
+                    // Data Point
                     json data_point_json = {
                         {"time_unix_nano", dataPoint.timeUnixNano},
                         {"as_double", dataPoint.value}
                     };
                     
-                    // Len ak je startTimeUnixNano neprázdne, pridá sa (Gauge ho zvyčajne nemá)
+                    // Len ak je startTimeUnixNano neprázdne, pridá sa
                     if (!dataPoint.startTimeUnixNano.empty()) {
                         data_point_json["start_time_unix_nano"] = dataPoint.startTimeUnixNano;
                     }
@@ -45,7 +48,7 @@ std::string SnmpOtelJson::CreateOtlpMetricsJson(const OpenTelemetryMetrics &otel
                     data_points_array.push_back(data_point_json);
                 }
 
-                // 4. Metric (Gauge)
+                // Metric (Gauge)
                 metrics_array.push_back({
                     {"name", metric.name},
                     {"description", metric.description},
@@ -56,7 +59,7 @@ std::string SnmpOtelJson::CreateOtlpMetricsJson(const OpenTelemetryMetrics &otel
                 });
             }
 
-            // 5. Scope Metrics
+            // Scope Metrics
             scope_metrics_array.push_back({
                 {"scope", {
                     {"name", scopeMetrics.scope.name},
@@ -66,7 +69,7 @@ std::string SnmpOtelJson::CreateOtlpMetricsJson(const OpenTelemetryMetrics &otel
             });
         }
 
-        // 6. Resource Metrics
+        // Resource Metrics
         resource_metrics_array.push_back({
             {"resource", {
                 {"attributes", resource_attributes_array}
@@ -75,7 +78,7 @@ std::string SnmpOtelJson::CreateOtlpMetricsJson(const OpenTelemetryMetrics &otel
         });
     }
 
-    // 7. Final JSON
+    // Final JSON
     root_json["resourceMetrics"] = resource_metrics_array;
 
     return root_json.dump();

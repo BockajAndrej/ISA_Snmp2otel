@@ -1,5 +1,6 @@
 //
 // Created by andrej.bockaj on 14. 10. 2025.
+// login: xbockaa00
 //
 
 #include <iostream>
@@ -33,6 +34,7 @@ SnmpOtel_BL::SnmpOtel_BL()
 
 int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
 {
+    // Registracia ctrl+c pre ukoncenie programu
     SignalHandler monitor;
     monitor.register_handler();
 
@@ -42,8 +44,10 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
     SnmpOtelJson snmpJsonCreator = SnmpOtelJson();
     SnmpOtelMetrics snmpMetrics = SnmpOtelMetrics();
 
-    std::map<std::string, SnmpOtelOidConfig> rawMetrics = snmpMetrics.loadOtelMetrics(config.oids_file, "");
+    // Nacitanie oids zo suboru (moze definovat aj rozsirujuce informacie z formatmapping suboru)
+    std::map<std::string, SnmpOtelOidConfig> rawMetrics = snmpMetrics.loadOtelMetrics(config.oids_file, config.oids_formatMappingFile);
 
+    // Pre jednoduhsiu pracu len s oids
     std::vector<std::string> oids;
     for (auto &pair : rawMetrics)
     {
@@ -52,6 +56,7 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
 
     OpenTelemetryMetrics otelData;
 
+    // Vytvorenie SNMP paketu pre posielanie cez UDP
     std::vector<unsigned char> msg = snmpBer.CreateSnmpMsg(config.community, 1, &oids);
     SNMP::StdByteVector receivedMsg;
 
@@ -60,13 +65,15 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
     int ActualCountOfRepeats = 0;
     auto LastSendMessageTime = std::chrono::steady_clock::now() - std::chrono::seconds(config.interval);
 
+    // Program funguje kym uzivatel neukonci (ctrl+c)
     while (SignalHandler::signal_received == 0)
     {
+        // Atualizacia (update dat z snmpAgenta a nasledny export)
         if ((std::chrono::steady_clock::now() - LastSendMessageTime) >= std::chrono::seconds(config.interval))
         {
+            // Ak odpoved z snmpAgenta nepride tak to skusi obmedzeni pocet krat poslat znova
             while (ActualCountOfRepeats++ < config.retries && SignalHandler::signal_received == 0)
             {
-
                 LastSendMessageTime = std::chrono::steady_clock::now();
                 try
                 {
@@ -87,7 +94,7 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
                         }
                         std::cout << "---------------" << std::endl;
                     }
-
+                    // Aktualizacia hodnot pre OTEL (poslanie a prijatie SNMP spravy)
                     int status = snmpClient.UpdateData(receivedMsg, config.target, std::to_string(config.port),
                                                        msg, tv);
                     if (status == EXIT_SUCCESS)
@@ -100,8 +107,27 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
                                       << "Recv msg:    " << receivedMsg.toStdString() << "\n"
                                       << "---------------" << std::endl;
                         }
+                        // V pripade ze aktualizacia bola uspesna tak dekodujeme
                         snmpBer.DecodeData(otelData, rawMetrics, receivedMsg, config);
                         ActualCountOfRepeats = 0;
+
+                        // Timestamp
+                        auto now = std::chrono::system_clock::now();
+                        auto nano_time = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
+
+                        // Vytvorenie json spravy pre OTEL export
+                        std::string jsonToSend = snmpJsonCreator.CreateOtlpMetricsJson(otelData);
+
+                        if (config.verbose)
+                        {
+                            std::cout << "--- EXPORT ---\n"
+                                      << "Target: " << config.endpoint << "\n"
+                                      << "json:    " << jsonToSend << "\n"
+                                      << "---------------" << std::endl;
+                        }
+
+                        // HTTP poslanie OTEL spravy
+                        snmpExport.SendHttpMessage(config.endpoint, jsonToSend);
                         break;
                     }
                     else if (ActualCountOfRepeats == config.retries - 1)
@@ -113,24 +139,6 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
                 {
                     throw std::runtime_error(e.what());
                 }
-            }
-            // Timestamp
-            auto now = std::chrono::system_clock::now();
-            auto nano_time = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
-
-            std::string jsonToSend = snmpJsonCreator.CreateOtlpMetricsJson(otelData);
-
-            if (SignalHandler::signal_received == 0)
-            {
-                if (config.verbose)
-                {
-                    std::cout << "--- EXPORT ---\n"
-                              << "Target: " << config.endpoint << "\n"
-                              << "json:    " << jsonToSend << "\n"
-                              << "---------------" << std::endl;
-                }
-
-                snmpExport.SendHttpMessage(config.endpoint, jsonToSend);
             }
         }
         if ((std::chrono::seconds(config.interval) - (std::chrono::steady_clock::now() - LastSendMessageTime)) > std::chrono::milliseconds(100))

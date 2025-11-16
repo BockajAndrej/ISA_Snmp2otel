@@ -1,5 +1,6 @@
 //
 // Created by andrej.bockaj on 17. 10. 2025.
+// login: xbockaa00
 //
 
 #ifndef SNMP2OTEL_SNMPOTELEXPORTCONFIG_H
@@ -10,6 +11,8 @@
 #include "../../libs/nlohmann/json.hpp"
 
 using json = nlohmann::json;
+
+//Struktura definujuca strukturu OTEL/HTTP/Json spravy pre OTEL endpoint
 
 struct Attribute
 {

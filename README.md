@@ -183,6 +183,12 @@ pre overenie spravnej funkcie snmpV2c sme si vytvorili snmpAgenta v c++ ktory sl
 neskor sme prisli na to ze je mozne vyuzivat snmpagent na skolskom servery merlina@vutbr.cz - lepsi referencny server.
 
 
+spojazdenie otel programu pre overovanie poslanych http post sprav na otel endpoint.
+![alt text](Images/runningOtelInDocker.png)
+
+
+kontrola vytvorenych snmp paketov cez kontrolu vo wireshark a kontrola hex cisiel.
+![alt text](Images/udpPort16161_snmp.png)
 
 ### Zdroje
 

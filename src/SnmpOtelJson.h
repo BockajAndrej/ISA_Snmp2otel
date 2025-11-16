@@ -1,6 +1,8 @@
 //
 // Created by andrej.bockaj on 17. 10. 2025.
+// login: xbockaa00
 //
+
 
 #ifndef SNMP2OTEL_SNMPOTELJSON_H
 #define SNMP2OTEL_SNMPOTELJSON_H
