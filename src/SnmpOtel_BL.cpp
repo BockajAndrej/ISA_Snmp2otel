@@ -120,7 +120,7 @@ int SnmpOtel_BL::MainFnc(const SnmpOtelConfig &config)
 
             std::string jsonToSend = snmpJsonCreator.CreateOtlpMetricsJson(otelData);
 
-            if (SignalHandler::signal_received != 0)
+            if (SignalHandler::signal_received == 0)
             {
                 if (config.verbose)
                 {
