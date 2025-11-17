@@ -172,24 +172,6 @@ Textový ASCII soubor: jedno OID na řádek, numerická forma. Prázdné řádky
 ```
 - *type* může být pouze gauge. Pokud položka chybí, použije se název odvozený z OID.
 
-## Použité technológie
-
-## Testovanie
-
-Ako prvotne testovanie bolo potrebne overit funkcnost SNMPV2c a nasledne overenie OTEL json.
-
-pre overenie spravnej funkcie snmpV2c sme si vytvorili snmpAgenta v c++ ktory sluzil na posielanie konstantnych metrik pre vyziadane OIDs. S tymto sposobom sme si overili funkcnost pre posielanie snmp cez udp a nasledne spracovanie spravy od snmpagenta.
-
-neskor sme prisli na to ze je mozne vyuzivat snmpagent na skolskom servery merlina@vutbr.cz - lepsi referencny server.
-
-
-spojazdenie otel programu pre overovanie poslanych http post sprav na otel endpoint.
-![alt text](Images/runningOtelInDocker.png)
-
-
-kontrola vytvorenych snmp paketov cez kontrolu vo wireshark a kontrola hex cisiel.
-![alt text](Images/udpPort16161_snmp.png)
-
 ### Zdroje
 
 SnmpV2c  

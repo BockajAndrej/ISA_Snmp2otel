@@ -17,7 +17,7 @@ struct SnmpOtelConfig
     std::string oids_file; // -o
     std::string endpoint;  // -e
 
-    std::string community = "private"; // -C
+    std::string community = "public"; // -C
     int interval = 10;                 // -i
     int retries = 2;                   // -r
     int timeout = 1000;                // -T

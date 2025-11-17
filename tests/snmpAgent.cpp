@@ -1,3 +1,8 @@
+//
+// Created by andrej.bockaj on 14. 10. 2025.
+// login: xbockaa00
+//
+
 #include <iostream>
 #include <vector>
 #include <cstring>
@@ -21,7 +26,7 @@ using StdByteVector = std::vector<uint8_t>;
 
 // Definície agenta
 #define SNMP_PORT 16161
-#define MAX_BUFFER_SIZE 10224
+#define MAX_BUFFER_SIZE 1024
 #define COMMUNITY_STRING "private"
 const StdString TARGET_OID_STR = ".1.3.6.1.4.1.9999.1.0";
 // ----------------------------

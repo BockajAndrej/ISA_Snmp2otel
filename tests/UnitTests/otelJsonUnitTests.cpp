@@ -1,3 +1,8 @@
+//
+// Created by andrej.bockaj on 22. 10. 2025.
+// login: xbockaa00
+//
+
 #include "../../libs/acutest/acutest.h"
 
 #include <iostream>
@@ -91,6 +96,6 @@ void otel_json_1(void)
 }
 
 TEST_LIST = {
-    {"Test otel json create funcion", otel_json_1},
+    {"Otel json create funcion", otel_json_1},
     {NULL, NULL} // END
 };
