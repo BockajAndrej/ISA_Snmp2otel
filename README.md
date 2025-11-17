@@ -21,6 +21,9 @@ Každý naměřený údaj je reprezentován jako Gauge.
 - Ve verbose režimu (-v) vypisujte ladicí informace (dotazy, odpovědi, export).
 - Chybové hlášky vypisujte na standardní chybový výstup.
 
+> [!NOTE]
+> Všetky spustiteľné súbory, generované po úspešnom vykonaní príkazu make build/all, sa nachádzajú v adresári build.
+
 ## Protokol SNMPv2: Popis Funkčnosti
 Protokol SNMPv2 (Simple Network Management Protocol verzia 2) je rozšírená a vylepšená verzia štandardného protokolu pre správu a monitorovanie sieťových zariadení, ako sú smerovače, prepínače, servery a tlačiarne. Umožňuje centrálnemu manažérovi (NMS - Network Management Station) získavať informácie a meniť konfiguráciu spravovaných zariadení.
 
