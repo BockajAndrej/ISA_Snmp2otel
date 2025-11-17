@@ -11,7 +11,7 @@ setup:
 
 build: setup
 	@echo "Start compilation (make)..."
-	@(cd $(BUILD_DIR) && make -j$(shell nproc))
+	@(cd $(BUILD_DIR) && make -j4)
 
 all: build test run 
 
@@ -26,20 +26,3 @@ test:
 clean:
 	@echo "Remove build directory$(BUILD_DIR)"
 	@rm -rf $(BUILD_DIR)
-
-
-startOtelCollector:
-	@echo "Start otel-collector..."
-	sudo docker run -d --name otel-collector-test -v $(pwd)/tests/OTEL/collector-config.yaml:/etc/otel-collector-contrib/config.yaml -p 4318:4318 otel/opentelemetry-collector-contrib:latest
-
-stopOtelCollector:
-	@echo "Stop otel-collector..."
-	sudo docker stop otel-collector-test
-
-clearOtelCollector:
-	@echo "Remove otel-collector..."
-	sudo docker rm otel-collector-test
-
-logOtel:
-	@echo "LOGS of received metrics: "
-	sudo docker logs otel-collector-test
