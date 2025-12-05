@@ -1,5 +1,8 @@
 # Snmp2otel - Exportér SNMP Gauge metrik do OpenTelemetry (OTEL)
 
+## Hodnotenie 
+Úspešnosť školských E2E testov: 93,3% 
+
 ## Zadanie
 Napište program snmp2otel, který bude v pravidelných intervalech dotazovat zadaný SNMP agent (zařízení) na vybrané OID a naměřené hodnoty exportovat jako OTEL Metrics pomocí rozhraní OTLP/HTTP (JSON) na zadaný OTEL endpoint (typicky OpenTelemetry Collector). Analýza a sestavení SNMP v2c zpráv i OTLP/HTTP JSON těla může být implementována libovolným způsobem dle vašeho návrhu. Uvažujte komunikaci přes UDP/161 pro SNMP (klient) a TCP/HTTP pro export (HTTPS volitelné v rozšíření).
 
